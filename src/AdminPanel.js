@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function AdminPanel() {
+function AdminPanel({ token, onLogout }) {
   const [file, setFile] = useState(null);
   const [faqQuestion, setFaqQuestion] = useState("");
   const [faqAnswer, setFaqAnswer] = useState("");
@@ -17,6 +17,7 @@ function AdminPanel() {
     try {
       const res = await fetch("http://localhost:5001/upload", {
         method: "POST",
+        headers: { "authorization": token },
         body: formData,
       });
       const data = await res.json();
@@ -36,7 +37,10 @@ function AdminPanel() {
     try {
       const res = await fetch("http://localhost:5001/faq", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "authorization": token
+        },
         body: JSON.stringify({ question: faqQuestion, answer: faqAnswer }),
       });
       const data = await res.json();
@@ -52,7 +56,9 @@ function AdminPanel() {
 
   async function loadKnowledge() {
     try {
-      const res = await fetch("http://localhost:5001/knowledge");
+      const res = await fetch("http://localhost:5001/knowledge", {
+        headers: { "authorization": token }
+      });
       const data = await res.json();
       setKnowledge(data.items || []);
     } catch (err) {
@@ -67,7 +73,6 @@ function AdminPanel() {
         Upload documents or add FAQs for students
       </p>
 
-      {/* File Upload Section */}
       <div style={{ border: "1px solid #ccc", borderRadius: "8px", padding: "20px", marginBottom: "20px" }}>
         <h3 style={{ marginTop: 0 }}>📄 Upload Document</h3>
         <p style={{ color: "#666", fontSize: "13px" }}>Supported: PDF, DOCX, TXT</p>
@@ -87,7 +92,6 @@ function AdminPanel() {
         </button>
       </div>
 
-      {/* FAQ Section */}
       <div style={{ border: "1px solid #ccc", borderRadius: "8px", padding: "20px", marginBottom: "20px" }}>
         <h3 style={{ marginTop: 0 }}>❓ Add FAQ</h3>
         <input
@@ -113,14 +117,12 @@ function AdminPanel() {
         </button>
       </div>
 
-      {/* Status Message */}
       {message && (
         <div style={{ padding: "12px", background: "#f0fff0", border: "1px solid #90ee90", borderRadius: "6px", marginBottom: "20px", color: "#2d7a2d" }}>
           {message}
         </div>
       )}
 
-      {/* Knowledge Base List */}
       <div style={{ border: "1px solid #ccc", borderRadius: "8px", padding: "20px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h3 style={{ marginTop: 0 }}>📚 Knowledge Base</h3>
@@ -138,6 +140,7 @@ function AdminPanel() {
             <div key={index} style={{ padding: "10px", background: "#f9f9f9", borderRadius: "6px", marginBottom: "8px", fontSize: "14px" }}>
               <span style={{ marginRight: "8px" }}>{item.type === "faq" ? "❓" : "📄"}</span>
               <strong>{item.name}</strong>
+              <span style={{ color: "#666", fontSize: "12px", marginLeft: "8px" }}>by {item.uploadedBy}</span>
               <span style={{ color: "#999", fontSize: "12px", marginLeft: "8px" }}>
                 {new Date(item.uploadedAt).toLocaleString()}
               </span>

@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Login from "./Login";
 import AdminPanel from "./AdminPanel";
 
 function ChatBot() {
   const [messages, setMessages] = useState([
-    { sender: "bot", text: "Hello! I am your College Assistant. Ask me about timetables, notices, T&P updates and more." }
+    { sender: "bot", text: "Hello! I am your College Assistant." }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -79,25 +80,85 @@ function ChatBot() {
 }
 
 function App() {
+  const [adminUser, setAdminUser] = useState(null);
+  const [adminToken, setAdminToken] = useState(null);
   const [page, setPage] = useState("chat");
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+
+  useEffect(() => {
+    const savedToken = localStorage.getItem("token");
+    const savedUser = localStorage.getItem("user");
+    if (savedToken && savedUser) {
+      setAdminToken(savedToken);
+      setAdminUser(JSON.parse(savedUser));
+    }
+  }, []);
+
+  function handleAdminLogin(userData) {
+    setAdminUser(userData);
+    setAdminToken(localStorage.getItem("token"));
+    setShowAdminLogin(false);
+    setPage("admin");
+  }
+
+  function handleAdminLogout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setAdminUser(null);
+    setAdminToken(null);
+    setPage("chat");
+  }
+
+  if (showAdminLogin) {
+    return <Login onLogin={handleAdminLogin} onBack={() => setShowAdminLogin(false)} />;
+  }
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "center", gap: "12px", padding: "16px", borderBottom: "1px solid #eee" }}>
-        <button
-          onClick={() => setPage("chat")}
-          style={{ padding: "8px 20px", background: page === "chat" ? "#0070f3" : "#f0f0f0", color: page === "chat" ? "white" : "black", border: "none", borderRadius: "6px", cursor: "pointer" }}
-        >
-          💬 Student Chat
-        </button>
-        <button
-          onClick={() => setPage("admin")}
-          style={{ padding: "8px 20px", background: page === "admin" ? "#0070f3" : "#f0f0f0", color: page === "admin" ? "white" : "black", border: "none", borderRadius: "6px", cursor: "pointer" }}
-        >
-          🔐 Admin Panel
-        </button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 24px", borderBottom: "1px solid #eee" }}>
+        <div style={{ display: "flex", gap: "12px" }}>
+          <button
+            onClick={() => setPage("chat")}
+            style={{ padding: "8px 20px", background: page === "chat" ? "#0070f3" : "#f0f0f0", color: page === "chat" ? "white" : "black", border: "none", borderRadius: "6px", cursor: "pointer" }}
+          >
+            💬 Student Chat
+          </button>
+          {adminUser && (
+            <button
+              onClick={() => setPage("admin")}
+              style={{ padding: "8px 20px", background: page === "admin" ? "#0070f3" : "#f0f0f0", color: page === "admin" ? "white" : "black", border: "none", borderRadius: "6px", cursor: "pointer" }}
+            >
+              🔐 Admin Panel
+            </button>
+          )}
+        </div>
+
+        <div>
+          {adminUser ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <span style={{ fontSize: "13px", color: "#666" }}>👤 {adminUser.name}</span>
+              <button
+                onClick={handleAdminLogout}
+                style={{ padding: "6px 12px", background: "#f0f0f0", border: "1px solid #ddd", borderRadius: "6px", cursor: "pointer", fontSize: "13px" }}
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowAdminLogin(true)}
+              style={{ padding: "6px 14px", background: "white", border: "1px solid #ddd", borderRadius: "6px", cursor: "pointer", fontSize: "13px", color: "#666" }}
+            >
+              🔐 Faculty Login
+            </button>
+          )}
+        </div>
       </div>
-      {page === "chat" ? <ChatBot /> : <AdminPanel />}
+
+      {page === "chat"
+        ? <ChatBot />
+        : <AdminPanel token={adminToken} onLogout={handleAdminLogout} />
+      }
     </div>
   );
 }
