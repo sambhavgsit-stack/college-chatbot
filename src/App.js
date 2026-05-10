@@ -1,6 +1,7 @@
 import { useState } from "react";
+import AdminPanel from "./AdminPanel";
 
-function App() {
+function ChatBot() {
   const [messages, setMessages] = useState([
     { sender: "bot", text: "Hello! I am your College Assistant. Ask me about timetables, notices, T&P updates and more." }
   ]);
@@ -9,7 +10,6 @@ function App() {
 
   async function sendMessage() {
     if (input.trim() === "") return;
-
     const userMessage = { sender: "user", text: input };
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
@@ -22,21 +22,17 @@ function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: input }),
       });
-
       const data = await response.json();
-      const botMessage = { sender: "bot", text: data.reply };
-      setMessages([...updatedMessages, botMessage]);
+      setMessages([...updatedMessages, { sender: "bot", text: data.reply }]);
     } catch (error) {
-      setMessages([...updatedMessages, { sender: "bot", text: "Sorry, something went wrong. Please try again." }]);
+      setMessages([...updatedMessages, { sender: "bot", text: "Sorry, something went wrong." }]);
     }
-
     setLoading(false);
   }
 
   return (
     <div style={{ maxWidth: "600px", margin: "40px auto", fontFamily: "sans-serif" }}>
       <h2 style={{ textAlign: "center" }}>🎓 College Assistant</h2>
-
       <div style={{ border: "1px solid #ccc", borderRadius: "8px", padding: "16px", height: "400px", overflowY: "auto", marginBottom: "12px" }}>
         {messages.map((msg, index) => (
           <div key={index} style={{ textAlign: msg.sender === "user" ? "right" : "left", marginBottom: "10px" }}>
@@ -61,7 +57,6 @@ function App() {
           </div>
         )}
       </div>
-
       <div style={{ display: "flex", gap: "8px" }}>
         <input
           style={{ flex: 1, padding: "10px", borderRadius: "6px", border: "1px solid #ccc", fontSize: "15px" }}
@@ -79,6 +74,30 @@ function App() {
           {loading ? "..." : "Send"}
         </button>
       </div>
+    </div>
+  );
+}
+
+function App() {
+  const [page, setPage] = useState("chat");
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "center", gap: "12px", padding: "16px", borderBottom: "1px solid #eee" }}>
+        <button
+          onClick={() => setPage("chat")}
+          style={{ padding: "8px 20px", background: page === "chat" ? "#0070f3" : "#f0f0f0", color: page === "chat" ? "white" : "black", border: "none", borderRadius: "6px", cursor: "pointer" }}
+        >
+          💬 Student Chat
+        </button>
+        <button
+          onClick={() => setPage("admin")}
+          style={{ padding: "8px 20px", background: page === "admin" ? "#0070f3" : "#f0f0f0", color: page === "admin" ? "white" : "black", border: "none", borderRadius: "6px", cursor: "pointer" }}
+        >
+          🔐 Admin Panel
+        </button>
+      </div>
+      {page === "chat" ? <ChatBot /> : <AdminPanel />}
     </div>
   );
 }
