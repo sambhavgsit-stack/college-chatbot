@@ -8,6 +8,7 @@ function ChatBot() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const chatEndRef = useEffect(() => {}, []);
 
   async function sendMessage() {
     if (input.trim() === "") return;
@@ -68,7 +69,7 @@ function ChatBot() {
                   {msg.docs.map((doc, i) => (
                     <button
                       key={i}
-                      onClick={() => window.open("http://localhost:5001/download/" + doc.index)}
+                      onClick={() => window.open("http://localhost:5001/download/" + doc.id)}
                       style={{ display: "inline-block", padding: "4px 10px", background: "#e8f0fe", color: "#0070f3", borderRadius: "6px", fontSize: "12px", border: "none", cursor: "pointer", marginRight: "6px", marginBottom: "4px" }}
                     >
                       {"⬇️ " + doc.name}
