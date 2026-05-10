@@ -4,7 +4,7 @@ import AdminPanel from "./AdminPanel";
 
 function ChatBot() {
   const [messages, setMessages] = useState([
-    { sender: "bot", text: "Hello! I am your College Assistant." }
+    { sender: "bot", text: "Hello! I am your College Assistant.", docs: [] }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -24,19 +24,27 @@ function ChatBot() {
         body: JSON.stringify({ message: input }),
       });
       const data = await response.json();
-      setMessages([...updatedMessages, { sender: "bot", text: data.reply }]);
+      setMessages([...updatedMessages, {
+        sender: "bot",
+        text: data.reply,
+        docs: data.suggestedDocs || []
+      }]);
     } catch (error) {
-      setMessages([...updatedMessages, { sender: "bot", text: "Sorry, something went wrong." }]);
+      setMessages([...updatedMessages, {
+        sender: "bot",
+        text: "Sorry, something went wrong.",
+        docs: []
+      }]);
     }
     setLoading(false);
   }
 
   return (
-    <div style={{ maxWidth: "600px", margin: "40px auto", fontFamily: "sans-serif" }}>
+    <div style={{ maxWidth: "600px", margin: "40px auto", fontFamily: "sans-serif", padding: "0 16px" }}>
       <h2 style={{ textAlign: "center" }}>🎓 College Assistant</h2>
-      <div style={{ border: "1px solid #ccc", borderRadius: "8px", padding: "16px", height: "400px", overflowY: "auto", marginBottom: "12px" }}>
+      <div style={{ border: "1px solid #ccc", borderRadius: "8px", padding: "16px", height: "420px", overflowY: "auto", marginBottom: "12px" }}>
         {messages.map((msg, index) => (
-          <div key={index} style={{ textAlign: msg.sender === "user" ? "right" : "left", marginBottom: "10px" }}>
+          <div key={index} style={{ textAlign: msg.sender === "user" ? "right" : "left", marginBottom: "12px" }}>
             <span style={{
               background: msg.sender === "user" ? "#0070f3" : "#f0f0f0",
               color: msg.sender === "user" ? "white" : "black",
@@ -46,7 +54,28 @@ function ChatBot() {
               maxWidth: "80%",
               textAlign: "left"
             }}>
-              {msg.text}
+              {msg.text.split('\n').map((line, i) => (
+                <span key={i}>
+                  {line}
+                  {i < msg.text.split('\n').length - 1 && <br />}
+                </span>
+              ))}
+              {msg.docs && msg.docs.length > 0 && (
+                <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px solid #ddd" }}>
+                  <div style={{ fontSize: "12px", color: "#666", marginBottom: "6px" }}>
+                    📎 You can also refer to:
+                  </div>
+                  {msg.docs.map((doc, i) => (
+                    <button
+                      key={i}
+                      onClick={() => window.open("http://localhost:5001/download/" + doc.index)}
+                      style={{ display: "inline-block", padding: "4px 10px", background: "#e8f0fe", color: "#0070f3", borderRadius: "6px", fontSize: "12px", border: "none", cursor: "pointer", marginRight: "6px", marginBottom: "4px" }}
+                    >
+                      {"⬇️ " + doc.name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </span>
           </div>
         ))}
@@ -132,11 +161,10 @@ function App() {
             </button>
           )}
         </div>
-
         <div>
           {adminUser ? (
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <span style={{ fontSize: "13px", color: "#666" }}>👤 {adminUser.name}</span>
+              <span style={{ fontSize: "13px", color: "#666" }}>{"👤 " + adminUser.name}</span>
               <button
                 onClick={handleAdminLogout}
                 style={{ padding: "6px 12px", background: "#f0f0f0", border: "1px solid #ddd", borderRadius: "6px", cursor: "pointer", fontSize: "13px" }}
@@ -154,7 +182,6 @@ function App() {
           )}
         </div>
       </div>
-
       {page === "chat"
         ? <ChatBot />
         : <AdminPanel token={adminToken} onLogout={handleAdminLogout} />

@@ -73,6 +73,7 @@ function QuickFAQ({ question, token, onAdded }) {
 function AdminPanel({ token, onLogout }) {
   const [activeTab, setActiveTab] = useState("upload");
   const [file, setFile] = useState(null);
+  const [downloadable, setDownloadable] = useState(false);
   const [faqQuestion, setFaqQuestion] = useState("");
   const [faqAnswer, setFaqAnswer] = useState("");
   const [message, setMessage] = useState("");
@@ -85,6 +86,7 @@ function AdminPanel({ token, onLogout }) {
     setLoading(true);
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("downloadable", downloadable);
     try {
       const res = await fetch("http://localhost:5001/upload", {
         method: "POST",
@@ -94,6 +96,7 @@ function AdminPanel({ token, onLogout }) {
       const data = await res.json();
       setMessage(data.message || data.error);
       setFile(null);
+      setDownloadable(false);
       loadKnowledge();
     } catch (err) {
       setMessage("Upload failed. Is the backend running?");
@@ -162,7 +165,6 @@ function AdminPanel({ token, onLogout }) {
     <div style={{ maxWidth: "650px", margin: "30px auto", fontFamily: "sans-serif", padding: "0 16px" }}>
       <h2 style={{ textAlign: "center" }}>🔐 Admin Panel</h2>
 
-      {/* Tabs */}
       <div style={{ display: "flex", gap: "8px", marginBottom: "24px", justifyContent: "center" }}>
         <button style={tabStyle("upload")} onClick={() => setActiveTab("upload")}>📄 Upload</button>
         <button style={tabStyle("faq")} onClick={() => setActiveTab("faq")}>❓ FAQ</button>
@@ -170,7 +172,6 @@ function AdminPanel({ token, onLogout }) {
         <button style={tabStyle("analytics")} onClick={() => { setActiveTab("analytics"); loadAnalytics(); }}>📊 Analytics</button>
       </div>
 
-      {/* Status Message */}
       {message && (
         <div style={{ padding: "12px", background: "#f0fff0", border: "1px solid #90ee90", borderRadius: "6px", marginBottom: "16px", color: "#2d7a2d" }}>
           {message}
@@ -178,7 +179,6 @@ function AdminPanel({ token, onLogout }) {
         </div>
       )}
 
-      {/* Upload Tab */}
       {activeTab === "upload" && (
         <div style={{ border: "1px solid #eee", borderRadius: "10px", padding: "24px" }}>
           <h3 style={{ marginTop: 0 }}>📄 Upload Document</h3>
@@ -194,6 +194,14 @@ function AdminPanel({ token, onLogout }) {
               Selected: <strong>{file.name}</strong>
             </p>
           )}
+          <label style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px", fontSize: "14px", cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={downloadable}
+              onChange={(e) => setDownloadable(e.target.checked)}
+            />
+            Allow students to download this file
+          </label>
           <button
             onClick={uploadFile}
             disabled={loading}
@@ -204,7 +212,6 @@ function AdminPanel({ token, onLogout }) {
         </div>
       )}
 
-      {/* FAQ Tab */}
       {activeTab === "faq" && (
         <div style={{ border: "1px solid #eee", borderRadius: "10px", padding: "24px" }}>
           <h3 style={{ marginTop: 0 }}>❓ Add FAQ</h3>
@@ -233,7 +240,6 @@ function AdminPanel({ token, onLogout }) {
         </div>
       )}
 
-      {/* Knowledge Base Tab */}
       {activeTab === "knowledge" && (
         <div style={{ border: "1px solid #eee", borderRadius: "10px", padding: "24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
@@ -252,6 +258,7 @@ function AdminPanel({ token, onLogout }) {
               <div key={index} style={{ padding: "12px", background: "#f9f9f9", borderRadius: "8px", marginBottom: "8px", fontSize: "14px" }}>
                 <span style={{ marginRight: "8px" }}>{item.type === "faq" ? "❓" : "📄"}</span>
                 <strong>{item.name}</strong>
+                {item.downloadable && <span style={{ marginLeft: "8px", fontSize: "11px", background: "#e8f0fe", color: "#0070f3", padding: "2px 6px", borderRadius: "4px" }}>downloadable</span>}
                 <span style={{ color: "#666", fontSize: "12px", marginLeft: "8px" }}>by {item.uploadedBy}</span>
                 <span style={{ color: "#999", fontSize: "12px", marginLeft: "8px" }}>
                   {new Date(item.uploadedAt).toLocaleString()}
@@ -262,7 +269,6 @@ function AdminPanel({ token, onLogout }) {
         </div>
       )}
 
-      {/* Analytics Tab */}
       {activeTab === "analytics" && (
         <div style={{ border: "1px solid #eee", borderRadius: "10px", padding: "24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
