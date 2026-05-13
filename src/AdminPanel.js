@@ -10,7 +10,7 @@ function QuickFAQ({ question, token, onAdded }) {
     if (!answer.trim()) return;
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5001/faq", {
+      const res = await fetch("https://college-chatbot-backend-production-d24b.up.railway.app/faq", {
         method: "POST",
         headers: { "Content-Type": "application/json", "authorization": token },
         body: JSON.stringify({ question, answer }),
@@ -67,7 +67,7 @@ function AdminPanel({ token }) {
     formData.append("file", file);
     formData.append("downloadable", downloadable);
     try {
-      const res = await fetch("http://localhost:5001/upload", {
+      const res = await fetch("https://college-chatbot-backend-production-d24b.up.railway.app/upload", {
         method: "POST",
         headers: { "authorization": token },
         body: formData,
@@ -87,7 +87,7 @@ function AdminPanel({ token }) {
     if (!faqQuestion || !faqAnswer) return setMessage("Fill both question and answer.");
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5001/faq", {
+      const res = await fetch("https://college-chatbot-backend-production-d24b.up.railway.app/faq", {
         method: "POST",
         headers: { "Content-Type": "application/json", "authorization": token },
         body: JSON.stringify({ question: faqQuestion, answer: faqAnswer }),
@@ -105,7 +105,7 @@ function AdminPanel({ token }) {
 
   async function loadKnowledge() {
     try {
-      const res = await fetch("http://localhost:5001/knowledge", { headers: { "authorization": token } });
+      const res = await fetch("https://college-chatbot-backend-production-d24b.up.railway.app/knowledge", { headers: { "authorization": token } });
       const data = await res.json();
       setKnowledge(data.items || []);
     } catch (err) {}
@@ -114,7 +114,7 @@ function AdminPanel({ token }) {
   async function loadAnalytics() {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5001/analytics", { headers: { "authorization": token } });
+      const res = await fetch("https://college-chatbot-backend-production-d24b.up.railway.app/analytics", { headers: { "authorization": token } });
       const data = await res.json();
       setAnalytics(data);
     } catch (err) {}
