@@ -1,6 +1,131 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Login from "./Login";
 import AdminPanel from "./AdminPanel";
+import "./App.css";
+
+function useTheme() {
+  const getSystemTheme = () =>
+    window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem("theme") || "auto";
+  });
+
+  useEffect(() => {
+    const applyTheme = (t) => {
+      const resolved = t === "auto" ? getSystemTheme() : t;
+      document.documentElement.setAttribute("data-theme", resolved);
+    };
+    applyTheme(theme);
+    localStorage.setItem("theme", theme);
+    if (theme === "auto") {
+      const mq = window.matchMedia("(prefers-color-scheme: dark)");
+      const handler = () => applyTheme("auto");
+      mq.addEventListener("change", handler);
+      return () => mq.removeEventListener("change", handler);
+    }
+  }, [theme]);
+
+  return [theme, setTheme];
+}
+
+function ThemeDropdown({ theme, setTheme }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const options = [
+    { value: "dark", label: "Dark", icon: "🌙" },
+    { value: "auto", label: "Auto", icon: "⚙️" },
+    { value: "light", label: "Light", icon: "☀️" },
+  ];
+
+  const current = options.find(o => o.value === theme);
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          padding: "7px 14px",
+          background: "var(--navy-card)",
+          border: "1px solid var(--navy-border)",
+          borderRadius: "20px",
+          color: "var(--text-secondary)",
+          fontSize: "13px",
+          cursor: "pointer",
+          fontFamily: "'DM Sans', sans-serif",
+          transition: "all 0.2s",
+        }}
+      >
+        <span>{current.icon}</span>
+        <span>{current.label}</span>
+        <span style={{ fontSize: "10px", opacity: 0.6 }}>{open ? "▲" : "▼"}</span>
+      </button>
+
+      {open && (
+        <div style={{
+          position: "absolute",
+          top: "calc(100% + 8px)",
+          right: 0,
+          background: "var(--navy-card)",
+          border: "1px solid var(--navy-border)",
+          borderRadius: "14px",
+          overflow: "hidden",
+          boxShadow: "var(--shadow)",
+          zIndex: 999,
+          minWidth: "130px",
+          animation: "fadeUp 0.15s ease",
+        }}>
+          {options.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => { setTheme(opt.value); setOpen(false); }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                width: "100%",
+                padding: "11px 16px",
+                border: "none",
+                background: theme === opt.value ? "var(--gold-dim)" : "transparent",
+                color: theme === opt.value ? "var(--gold)" : "var(--text-secondary)",
+                fontSize: "13px",
+                cursor: "pointer",
+                fontFamily: "'DM Sans', sans-serif",
+                fontWeight: theme === opt.value ? "600" : "400",
+                transition: "all 0.15s",
+                textAlign: "left",
+              }}
+              onMouseEnter={e => {
+                if (theme !== opt.value) e.currentTarget.style.background = "var(--navy-border)";
+              }}
+              onMouseLeave={e => {
+                if (theme !== opt.value) e.currentTarget.style.background = "transparent";
+              }}
+            >
+              <span>{opt.icon}</span>
+              <span>{opt.label}</span>
+              {theme === opt.value && (
+                <span style={{ marginLeft: "auto", fontSize: "11px" }}>✓</span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ChatBot() {
   const [messages, setMessages] = useState([
@@ -8,7 +133,11 @@ function ChatBot() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const chatEndRef = useEffect(() => {}, []);
+  const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
 
   async function sendMessage() {
     if (input.trim() === "") return;
@@ -41,20 +170,17 @@ function ChatBot() {
   }
 
   return (
-    <div style={{ maxWidth: "600px", margin: "40px auto", fontFamily: "sans-serif", padding: "0 16px" }}>
-      <h2 style={{ textAlign: "center" }}>🎓 College Assistant</h2>
-      <div style={{ border: "1px solid #ccc", borderRadius: "8px", padding: "16px", height: "420px", overflowY: "auto", marginBottom: "12px" }}>
+    <div className="chat-container">
+      <div className="chat-header">
+        <h2>College <span>Assistant</span></h2>
+        <p>Ask me anything about timetables, notices, T&P updates and more</p>
+      </div>
+
+      <div className="chat-box">
         {messages.map((msg, index) => (
-          <div key={index} style={{ textAlign: msg.sender === "user" ? "right" : "left", marginBottom: "12px" }}>
-            <span style={{
-              background: msg.sender === "user" ? "#0070f3" : "#f0f0f0",
-              color: msg.sender === "user" ? "white" : "black",
-              padding: "8px 14px",
-              borderRadius: "18px",
-              display: "inline-block",
-              maxWidth: "80%",
-              textAlign: "left"
-            }}>
+          <div key={index} className={"message-wrapper " + msg.sender}>
+            {msg.sender === "bot" && <div className="bot-avatar">🎓</div>}
+            <div className={"message-bubble " + msg.sender}>
               {msg.text.split('\n').map((line, i) => (
                 <span key={i}>
                   {line}
@@ -62,35 +188,40 @@ function ChatBot() {
                 </span>
               ))}
               {msg.docs && msg.docs.length > 0 && (
-                <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px solid #ddd" }}>
-                  <div style={{ fontSize: "12px", color: "#666", marginBottom: "6px" }}>
-                    📎 You can also refer to:
-                  </div>
+                <div className="doc-suggestions">
+                  <p>📎 You can also refer to:</p>
                   {msg.docs.map((doc, i) => (
                     <button
                       key={i}
+                      className="doc-btn"
                       onClick={() => window.open("http://localhost:5001/download/" + doc.id)}
-                      style={{ display: "inline-block", padding: "4px 10px", background: "#e8f0fe", color: "#0070f3", borderRadius: "6px", fontSize: "12px", border: "none", cursor: "pointer", marginRight: "6px", marginBottom: "4px" }}
                     >
-                      {"⬇️ " + doc.name}
+                      ⬇️ {doc.name}
                     </button>
                   ))}
                 </div>
               )}
-            </span>
+            </div>
           </div>
         ))}
         {loading && (
-          <div style={{ textAlign: "left", marginBottom: "10px" }}>
-            <span style={{ background: "#f0f0f0", padding: "8px 14px", borderRadius: "18px", display: "inline-block" }}>
-              Typing...
-            </span>
+          <div className="message-wrapper bot">
+            <div className="bot-avatar">🎓</div>
+            <div className="message-bubble bot">
+              <div className="typing-indicator">
+                <div className="typing-dot" />
+                <div className="typing-dot" />
+                <div className="typing-dot" />
+              </div>
+            </div>
           </div>
         )}
+        <div ref={chatEndRef} />
       </div>
-      <div style={{ display: "flex", gap: "8px" }}>
+
+      <div className="chat-input-area">
         <input
-          style={{ flex: 1, padding: "10px", borderRadius: "6px", border: "1px solid #ccc", fontSize: "15px" }}
+          className="chat-input"
           type="text"
           placeholder="Type your question..."
           value={input}
@@ -98,11 +229,11 @@ function ChatBot() {
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
         />
         <button
-          style={{ padding: "10px 20px", background: loading ? "#ccc" : "#0070f3", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "15px" }}
+          className="btn-send"
           onClick={sendMessage}
           disabled={loading}
         >
-          {loading ? "..." : "Send"}
+          {loading ? "..." : "Send →"}
         </button>
       </div>
     </div>
@@ -110,6 +241,7 @@ function ChatBot() {
 }
 
 function App() {
+  const [theme, setTheme] = useTheme();
   const [adminUser, setAdminUser] = useState(null);
   const [adminToken, setAdminToken] = useState(null);
   const [page, setPage] = useState("chat");
@@ -145,48 +277,58 @@ function App() {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 24px", borderBottom: "1px solid #eee" }}>
-        <div style={{ display: "flex", gap: "12px" }}>
-          <button
-            onClick={() => setPage("chat")}
-            style={{ padding: "8px 20px", background: page === "chat" ? "#0070f3" : "#f0f0f0", color: page === "chat" ? "white" : "black", border: "none", borderRadius: "6px", cursor: "pointer" }}
-          >
-            💬 Student Chat
-          </button>
-          {adminUser && (
-            <button
-              onClick={() => setPage("admin")}
-              style={{ padding: "8px 20px", background: page === "admin" ? "#0070f3" : "#f0f0f0", color: page === "admin" ? "white" : "black", border: "none", borderRadius: "6px", cursor: "pointer" }}
-            >
-              🔐 Admin Panel
-            </button>
-          )}
+      <nav className="navbar">
+        {/* Left — Brand */}
+        <div className="navbar-brand">
+          🎓 <span>College Assistant</span>
         </div>
-        <div>
-          {adminUser ? (
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <span style={{ fontSize: "13px", color: "#666" }}>{"👤 " + adminUser.name}</span>
+
+        {/* Center — perfectly centered tabs */}
+        <div style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          display: "flex",
+          justifyContent: "center",
+          pointerEvents: "none",
+        }}>
+          <div style={{ pointerEvents: "auto" }}>
+            <div className="navbar-tabs">
               <button
-                onClick={handleAdminLogout}
-                style={{ padding: "6px 12px", background: "#f0f0f0", border: "1px solid #ddd", borderRadius: "6px", cursor: "pointer", fontSize: "13px" }}
+                className={"nav-tab" + (page === "chat" ? " active" : "")}
+                onClick={() => setPage("chat")}
               >
-                Logout
+                💬 Student Chat
               </button>
+              {adminUser && (
+                <button
+                  className={"nav-tab" + (page === "admin" ? " active" : "")}
+                  onClick={() => setPage("admin")}
+                >
+                  🔐 Admin Panel
+                </button>
+              )}
             </div>
+          </div>
+        </div>
+
+        {/* Right — Theme + Auth */}
+        <div className="navbar-right">
+          <ThemeDropdown theme={theme} setTheme={setTheme} />
+          {adminUser ? (
+            <>
+              <div className="user-badge">👤 {adminUser.name}</div>
+              <button className="btn-logout" onClick={handleAdminLogout}>Logout</button>
+            </>
           ) : (
-            <button
-              onClick={() => setShowAdminLogin(true)}
-              style={{ padding: "6px 14px", background: "white", border: "1px solid #ddd", borderRadius: "6px", cursor: "pointer", fontSize: "13px", color: "#666" }}
-            >
+            <button className="btn-faculty-login" onClick={() => setShowAdminLogin(true)}>
               🔐 Faculty Login
             </button>
           )}
         </div>
-      </div>
-      {page === "chat"
-        ? <ChatBot />
-        : <AdminPanel token={adminToken} onLogout={handleAdminLogout} />
-      }
+      </nav>
+
+      {page === "chat" ? <ChatBot /> : <AdminPanel token={adminToken} />}
     </div>
   );
 }
