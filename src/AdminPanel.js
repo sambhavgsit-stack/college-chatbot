@@ -60,6 +60,8 @@ function AdminPanel({ token }) {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const BASE_URL = "https://college-chatbot-backend-production-d24b.up.railway.app";
+
   async function uploadFile() {
     if (!file) return setMessage("Please select a file first.");
     setLoading(true);
@@ -67,7 +69,7 @@ function AdminPanel({ token }) {
     formData.append("file", file);
     formData.append("downloadable", downloadable);
     try {
-      const res = await fetch("https://college-chatbot-backend-production-d24b.up.railway.app/upload", {
+      const res = await fetch(BASE_URL + "/upload", {
         method: "POST",
         headers: { "authorization": token },
         body: formData,
@@ -78,7 +80,7 @@ function AdminPanel({ token }) {
       setDownloadable(false);
       loadKnowledge();
     } catch (err) {
-      setMessage("Upload failed.");
+      setMessage("Upload failed. Please try again.");
     }
     setLoading(false);
   }
@@ -87,7 +89,7 @@ function AdminPanel({ token }) {
     if (!faqQuestion || !faqAnswer) return setMessage("Fill both question and answer.");
     setLoading(true);
     try {
-      const res = await fetch("https://college-chatbot-backend-production-d24b.up.railway.app/faq", {
+      const res = await fetch(BASE_URL + "/faq", {
         method: "POST",
         headers: { "Content-Type": "application/json", "authorization": token },
         body: JSON.stringify({ question: faqQuestion, answer: faqAnswer }),
@@ -105,7 +107,9 @@ function AdminPanel({ token }) {
 
   async function loadKnowledge() {
     try {
-      const res = await fetch("https://college-chatbot-backend-production-d24b.up.railway.app/knowledge", { headers: { "authorization": token } });
+      const res = await fetch(BASE_URL + "/knowledge", {
+        headers: { "authorization": token }
+      });
       const data = await res.json();
       setKnowledge(data.items || []);
     } catch (err) {}
@@ -114,7 +118,9 @@ function AdminPanel({ token }) {
   async function loadAnalytics() {
     setLoading(true);
     try {
-      const res = await fetch("https://college-chatbot-backend-production-d24b.up.railway.app/analytics", { headers: { "authorization": token } });
+      const res = await fetch(BASE_URL + "/analytics", {
+        headers: { "authorization": token }
+      });
       const data = await res.json();
       setAnalytics(data);
     } catch (err) {}
@@ -138,7 +144,7 @@ function AdminPanel({ token }) {
       {message && (
         <div className="success-banner">
           <span>{message}</span>
-          <button onClick={() => setMessage("")} style={{ background: "none", border: "none", color: "#6ee7b7", cursor: "pointer", fontSize: "16px" }}>×</button>
+          <button onClick={() => setMessage("")} style={{ background: "none", border: "none", color: "inherit", cursor: "pointer", fontSize: "16px" }}>×</button>
         </div>
       )}
 
@@ -147,12 +153,24 @@ function AdminPanel({ token }) {
           <h3>📄 Upload Document</h3>
           <p className="subtitle">Upload PDF, DOCX, or TXT files to the knowledge base</p>
 
-          <label className="file-upload-area" onClick={() => document.getElementById('fileInput').click()}>
+          <div
+            className="file-upload-area"
+            onClick={() => document.getElementById('fileInput').click()}
+          >
             <span className="upload-icon">☁️</span>
             <p>{file ? file.name : "Click to select a file"}</p>
-            <p style={{ fontSize: "11px", marginTop: "4px", color: "var(--text-dim)" }}>PDF, DOCX, TXT supported</p>
-            <input id="fileInput" type="file" accept=".pdf,.docx,.txt" onChange={(e) => setFile(e.target.files[0])} style={{ display: "none" }} />
-          </label>
+            <p style={{ fontSize: "11px", marginTop: "4px", color: "var(--text-dim)" }}>
+              PDF, DOCX, TXT supported
+            </p>
+          </div>
+
+          <input
+            id="fileInput"
+            type="file"
+            accept=".pdf,.docx,.txt"
+            onChange={(e) => setFile(e.target.files[0])}
+            style={{ display: "none" }}
+          />
 
           {file && (
             <div className="file-selected">
@@ -162,7 +180,11 @@ function AdminPanel({ token }) {
           )}
 
           <label className="checkbox-label">
-            <input type="checkbox" checked={downloadable} onChange={(e) => setDownloadable(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={downloadable}
+              onChange={(e) => setDownloadable(e.target.checked)}
+            />
             Allow students to download this file
           </label>
 
@@ -278,7 +300,11 @@ function AdminPanel({ token }) {
                           {item.count}×
                         </span>
                       </div>
-                      <QuickFAQ question={item.question} token={token} onAdded={() => { setMessage("FAQ added!"); loadAnalytics(); }} />
+                      <QuickFAQ
+                        question={item.question}
+                        token={token}
+                        onAdded={() => { setMessage("FAQ added successfully!"); loadAnalytics(); }}
+                      />
                     </div>
                   ))}
                 </>
