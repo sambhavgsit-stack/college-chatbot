@@ -11,7 +11,7 @@ function Login({ onLogin, onBack }) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("https://college-chatbot-backend-production-d24b.up.railway.app/login", {
+      const res = await fetch("https://college-chatbot-backend-77i2.onrender.com/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

@@ -10,7 +10,7 @@ function QuickFAQ({ question, token, onAdded }) {
     if (!answer.trim()) return;
     setLoading(true);
     try {
-      const res = await fetch("https://college-chatbot-backend-production-d24b.up.railway.app/faq", {
+      const res = await fetch("https://college-chatbot-backend-77i2.onrender.com/faq", {
         method: "POST",
         headers: { "Content-Type": "application/json", "authorization": token },
         body: JSON.stringify({ question, answer }),
@@ -60,7 +60,7 @@ function AdminPanel({ token }) {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const BASE_URL = "https://college-chatbot-backend-production-d24b.up.railway.app";
+  const BASE_URL = "https://college-chatbot-backend-77i2.onrender.com";
 
   async function uploadFile() {
     if (!file) return setMessage("Please select a file first.");
